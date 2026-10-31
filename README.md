@@ -12,6 +12,12 @@ Windows 桌面上的「点击涟漪 + 光标拖尾」小工具：单文件、零
 
 到 [Releases](https://github.com/LRxfl0019/MouseTrailFx/releases/latest) 下载 `MouseTrailFx.exe`，双击即可运行。
 
+一条链接直达（永远指向最新版）：
+
+```
+https://github.com/LRxfl0019/MouseTrailFx/releases/latest/download/MouseTrailFx.exe
+```
+
 - 系统：Windows 10 1809+ / Windows 11（x64）
 - 免安装、免运行库，单个 exe 约 500 KB
 - 首次运行若出现 SmartScreen「未知发布者」：点「更多信息 → 仍要运行」；
