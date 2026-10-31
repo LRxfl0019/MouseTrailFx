@@ -1,0 +1,16 @@
+# build artifacts
+*.exe
+*.o
+*.obj
+*.log
+dist/
+build/
+
+# editor / IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# local settings
+config.json

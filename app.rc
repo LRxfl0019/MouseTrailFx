@@ -1,0 +1,32 @@
+#include <windows.h>
+
+1 ICON "app.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,5,0,0
+ PRODUCTVERSION 0,5,0,0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "MouseTrailFx"
+            VALUE "FileDescription", "MouseTrailFx - desktop click and trail effects"
+            VALUE "FileVersion", "0.5.0.0"
+            VALUE "InternalName", "MouseTrailFx"
+            VALUE "LegalCopyright", "MIT License"
+            VALUE "OriginalFilename", "MouseTrailFx.exe"
+            VALUE "ProductName", "MouseTrailFx"
+            VALUE "ProductVersion", "0.5.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
