@@ -2,7 +2,26 @@
 
 Windows 桌面上的「点击涟漪 + 光标拖尾」小工具：单文件、零依赖、空闲不耗 CPU。
 
+[![build](https://github.com/LRxfl0019/MouseTrailFx/actions/workflows/build.yml/badge.svg)](https://github.com/LRxfl0019/MouseTrailFx/actions/workflows/build.yml)
+[![release](https://img.shields.io/github/v/release/LRxfl0019/MouseTrailFx)](https://github.com/LRxfl0019/MouseTrailFx/releases/latest)
+[![license](https://img.shields.io/github/license/LRxfl0019/MouseTrailFx)](LICENSE)
+
 ![效果](docs/effect.png)
+
+## 下载
+
+到 [Releases](https://github.com/LRxfl0019/MouseTrailFx/releases/latest) 下载 `MouseTrailFx.exe`，双击即可运行。
+
+- 系统：Windows 10 1809+ / Windows 11（x64）
+- 免安装、免运行库，单个 exe 约 500 KB
+- 首次运行若出现 SmartScreen「未知发布者」：点「更多信息 → 仍要运行」；
+  或先解除锁定：
+
+  ```powershell
+  Unblock-File .\MouseTrailFx.exe
+  ```
+
+  程序未签名（代码签名证书年费较高），但这不影响功能，也可以直接[从源码构建](#从源码构建)。
 
 ## 特性
 
@@ -17,24 +36,6 @@ Windows 桌面上的「点击涟漪 + 光标拖尾」小工具：单文件、零
 
 ![设置面板](docs/panel.png)
 
-## 构建
-
-需要 [MinGW-w64](https://www.mingw-w64.org/)（`g++`、`windres`）：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File build.ps1
-```
-
-产物：`dist\MouseTrailFx.exe`（约 500 KB，静态链接，无需运行库）。
-
-手动编译：
-
-```powershell
-windres app.rc -O coff -o build_res.o
-g++ -std=c++20 -O2 -s -municode -mwindows -static src/main.cpp build_res.o -o dist\MouseTrailFx.exe `
-    -lgdi32 -luser32 -lwinmm -lshell32 -lole32 -luuid
-```
-
 ## 使用
 
 | 操作 | 说明 |
@@ -46,6 +47,8 @@ g++ -std=c++20 -O2 -s -municode -mwindows -static src/main.cpp build_res.o -o di
 | `Ctrl+Alt+Q` | 退出 |
 
 托盘右键菜单：启用效果、预设（默认/霓虹/极简/星尘）、设置、打开配置文件、开机自启、创建桌面快捷方式、截图时隐藏特效、退出。
+
+卸载：托盘 →「开机自启」取消勾选 →「退出」→ 删除 exe 与 `%APPDATA%\MouseTrailFx\`。
 
 ## 配置
 
@@ -69,6 +72,24 @@ g++ -std=c++20 -O2 -s -municode -mwindows -static src/main.cpp build_res.o -o di
 - `blend`：`screen` / `normal` / `overlay` / `multiply` / `lighten`
 - `color.mode`：`accent`（跟随系统强调色）/ `rainbow` / `custom`
 - `captureHidden`：`true` 时截图与录屏看不到特效
+
+## 从源码构建
+
+需要 [MinGW-w64](https://www.mingw-w64.org/)（`g++`、`windres`）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build.ps1
+```
+
+产物：`dist\MouseTrailFx.exe`。
+
+手动编译：
+
+```powershell
+windres app.rc -O coff -o build_res.o
+g++ -std=c++20 -O2 -s -municode -mwindows -static src/main.cpp build_res.o -o dist\MouseTrailFx.exe `
+    -lgdi32 -luser32 -lwinmm -lshell32 -lole32 -luuid
+```
 
 ## 实现要点
 
@@ -104,8 +125,7 @@ g++ -std=c++20 -O2 -s -municode -mwindows -static src/main.cpp build_res.o -o di
 ## 已知限制
 
 1. **混合模式是近似**：拿不到桌面像素，`screen` 用提亮 + 加色逼近。
-2. **未签名**：首次运行可能触发 SmartScreen「未知发布者」。要彻底消除需要代码签名证书；
-   `tools\unblock.ps1` 可去掉下载文件的网络标记。
+2. **未签名**：首次运行可能触发 SmartScreen「未知发布者」，见[下载](#下载)一节的解除方法。
 3. **截图排除依赖系统**：`WDA_EXCLUDEFROMCAPTURE` 需要 Windows 10 2004+。
 4. 多显示器混合 DPI 未逐屏验证；光晕是多遍描边近似，不是真高斯。
 
@@ -117,6 +137,7 @@ app.rc / app.ico    图标与版本信息
 build.ps1           构建脚本
 docs/               截图
 tools/              图标生成、快捷方式、解除锁定等辅助脚本
+.github/workflows/  CI 构建与发布
 ```
 
 ## 许可
