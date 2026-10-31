@@ -1,4 +1,4 @@
-name: build
+﻿name: build
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
           path: dist/MouseTrailFx.exe
           if-no-files-found: error
 
-  # 打 tag 时自动发 Release，附带编译好的 exe
+  # 鎵?tag 鏃惰嚜鍔ㄥ彂 Release锛岄檮甯︾紪璇戝ソ鐨?exe
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: windows
@@ -55,8 +55,20 @@ jobs:
           body: |
             Windows 10 1809+ / Windows 11 (x64)，免安装单文件。
 
-            首次运行如提示「未知发布者」（SmartScreen），点「更多信息 → 仍要运行」，或先执行：
+            ## 功能
+            - 拖尾：彗尾（连续光带）/ 星尘（离散亮点）
+            - 点击：涟漪 / 星火 / 两者
+            - 托盘菜单、开机自启、配置热更新、截图时隐藏特效
+
+            ## 安装
+            1. 下载 `MouseTrailFx.exe`，无需安装、无需运行库
+            2. 双击运行；托盘图标双击打开设置
+
+            首次运行如提示「未知发布者」（程序未签名），点「更多信息 → 仍要运行」，或先执行：
 
             ```powershell
             Unblock-File .\MouseTrailFx.exe
             ```
+
+            快捷键：`Ctrl+Alt+P` 面板 · `Ctrl+Alt+F` 开关 · `Ctrl+Alt+Q` 退出
+
