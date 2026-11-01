@@ -398,6 +398,7 @@ static HHOOK    g_hMouse = nullptr;
 static volatile LONG g_hookX = 0, g_hookY = 0;
 static volatile LONG g_hookEvents = 0, g_rawEvents = 0, g_hookClicks = 0;
 static float    g_hue = 0.f;
+static int g_boxL = 0, g_boxT = 0, g_boxR = 0, g_boxB = 0;
 static int      g_seed = 0;
 
 static float g_accR = 0.13f, g_accG = 0.78f, g_accB = 0.84f;
@@ -725,6 +726,57 @@ static void HideOverlay() {
 }
 
 static void EnsureOverlaySane();
+
+// 把当前这一帧（透明 DIB 里的粒子）合成到一张深色渐变海报上，存成 BMP —— 用于生成不带桌面内容的文档截图
+static void DumpPoster(const char* path) {
+    const int W = 1400, H = 420;
+    BITMAPFILEHEADER fh{};
+    BITMAPINFOHEADER ih{};
+    ih.biSize = sizeof(ih); ih.biWidth = W; ih.biHeight = -H; ih.biPlanes = 1;
+    ih.biBitCount = 32; ih.biCompression = BI_RGB; ih.biSizeImage = W * H * 4;
+    std::vector<unsigned char> out(size_t(W) * H * 4);
+    for (int y = 0; y < H; ++y) {
+        for (int x = 0; x < W; ++x) {
+            float ty = float(y) / H, tx = float(x) / W;
+            float t = 0.6f * ty + 0.4f * tx;
+            unsigned char* p = &out[(size_t(y) * W + x) * 4];
+            p[0] = (unsigned char)(16 + (62 - 16) * t);   // B
+            p[1] = (unsigned char)(24 + (24 - 24) * t);   // G
+            p[2] = (unsigned char)(42 + (72 - 42) * t);   // R
+            p[3] = 255;
+        }
+    }
+    int bw = g_boxR - g_boxL + 1, bh = g_boxB - g_boxT + 1;
+    int ox = (W - bw) / 2, oy = (H - bh) / 2;
+    for (int y = 0; y < bh; ++y) {
+        int dy = y + oy;
+        if (dy < 0 || dy >= H) continue;
+        const uint32_t* src = g_bits + size_t(g_boxT + y) * g_W + g_boxL;
+        for (int x = 0; x < bw; ++x) {
+            int dx = x + ox;
+            if (dx < 0 || dx >= W) continue;
+            uint32_t v = src[x];
+            float a = float((v >> 24) & 0xFF) / 255.f;
+            if (a <= 0.f) continue;
+            float sr = float((v >> 16) & 0xFF), sg = float((v >> 8) & 0xFF), sb = float(v & 0xFF);
+            unsigned char* p = &out[(size_t(dy) * W + dx) * 4];
+            p[0] = (unsigned char)std::min(255.f, sb + p[0] * (1.f - a));
+            p[1] = (unsigned char)std::min(255.f, sg + p[1] * (1.f - a));
+            p[2] = (unsigned char)std::min(255.f, sr + p[2] * (1.f - a));
+        }
+    }
+    fh.bfType = 0x4D42;
+    fh.bfOffBits = sizeof(fh) + sizeof(ih);
+    fh.bfSize = fh.bfOffBits + DWORD(out.size());
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return;
+    fwrite(&fh, sizeof(fh), 1, fp);
+    fwrite(&ih, sizeof(ih), 1, fp);
+    fwrite(out.data(), 1, out.size(), fp);
+    fclose(fp);
+    LogF("poster dumped %dx%d", W, H);
+}
+
 static void Render() {
     EnsureOverlaySane();
     double now = g_mode == 4 ? g_freezeT : NowMs();
@@ -769,6 +821,7 @@ static void Render() {
     L = snap(L);
     T = snap(T);
     R = std::min(g_W - 1, L + quant(R - L + 1) - 1);
+    g_boxL = L; g_boxT = T; g_boxR = R; g_boxB = B;
     B = std::min(g_H - 1, T + quant(B - T + 1) - 1);
 
     // 清局�?
@@ -1627,6 +1680,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int) {
     else if (wcsstr(GetCommandLineW(), L"--clicktest")) g_mode = 2;
     else if (wcsstr(GetCommandLineW(), L"--trailtest")) g_mode = 3;
     else if (wcsstr(GetCommandLineW(), L"--demo")) g_mode = 1;
+    if (wcsstr(GetCommandLineW(), L"--dump")) g_mode = 4;
     LogF("start pid=%lu mode=%d", GetCurrentProcessId(), g_mode);
 
     ConfigPathInit();
@@ -1689,13 +1743,13 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int) {
     if (g_mode == 4) {   // 冻结展示：固定一�?S 形拖�?+ 一�?30% 进度的涟漪，便于截图对比
         g_freezeT = NowMs();
         float cx = g_W * 0.5f, cy = g_H * 0.5f;
-        for (int i = 0; i < 80; ++i) {
-            float p = float(i) / 79.f;
+        for (int i = 0; i < 260; ++i) {
+            float p = float(i) / 259.f;
             float x = cx - 520.f + p * 900.f;
             float y = cy + 120.f * sinf(p * 3.14159f * 1.6f) - 40.f;
-            g_trail.push_back({x, y, g_freezeT - (79 - i) * 5.2, 0.f});
+            g_trail.push_back({x, y, g_freezeT - (259 - i) * 1.6, 0.f});
         }
-        g_clicks.push_back({cx + 300.f, cy - 60.f, g_freezeT - 270.f, 7, 0.f});
+        g_clicks.push_back({cx + 300.f, cy - 60.f, g_freezeT - 330.f, 7, 0.f});
     }
 
     WNDCLASSEXW wc{};
@@ -1710,6 +1764,17 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int) {
         L"MouseTrailFxWnd", L"MouseTrailFx", WS_POPUP,
         0, 0, 1, 1, nullptr, nullptr, hInst, nullptr);
     if (!g_hwnd) return 1;
+
+    if (wcsstr(GetCommandLineW(), L"--dump")) {
+        Render();
+        char p[MAX_PATH];
+        GetModuleFileNameA(nullptr, p, MAX_PATH);
+        char* sl = strrchr(p, 92);
+        if (sl) *sl = 0;
+        strcat(p, "\\poster.bmp");
+        DumpPoster(p);
+        return 0;
+    }
 
     ApplyCaptureAffinity();
 
