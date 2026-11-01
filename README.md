@@ -18,6 +18,8 @@ Windows 桌面上的「点击涟漪 + 光标拖尾」小工具：单文件、零
 https://github.com/LRxfl0019/MouseTrailFx/releases/latest/download/MouseTrailFx.exe
 ```
 
+> 首次运行弹出「未知发布者」？见 **[首次运行提示说明](docs/install.md)** —— 为什么提示、两种弹窗、三种处理方式，都有截图。
+
 - 系统：Windows 10 1809+ / Windows 11（x64）
 - 免安装、免运行库，单个 exe 约 500 KB
 - 首次运行若出现 SmartScreen「未知发布者」：点「更多信息 → 仍要运行」；
