@@ -67,10 +67,10 @@ https://github.com/LRxfl0019/MouseTrailFx/releases/latest/download/MouseTrailFx.
   "enabled": true,
   "autostart": true,
   "captureHidden": true,
-  "opacity": 85,
+  "opacity": 80,
   "blend": "screen",
   "click": { "on": true, "style": "ripple", "size": 50, "glow": 45 },
-  "trail": { "on": true, "style": "comet", "length": 420, "width": 3.0, "glow": 60 },
+  "trail": { "on": true, "style": "comet", "length": 201, "width": 3.0, "glow": 60 },
   "color": { "mode": "accent", "value": "#4f8cff" }
 }
 ```
@@ -107,7 +107,7 @@ g++ -std=c++20 -O2 -s -municode -mwindows -static src/main.cpp build_res.o -o di
 | 参数 | 值 | 来源 |
 |---|---|---|
 | 拖尾采样间距 | 3 px（距离重采样） | `FX_TRAIL_STEP_PX` |
-| 拖尾寿命 | 420 ms（可调 80–2000） | `fxTrailLength` |
+| 拖尾寿命 | 默认 201 ms（可调 80–2000） | `fxTrailLength` |
 | 点击寿命 | 900 ms | `FX_CLICK_LIFE_MS` |
 | 涟漪 | 两圈，第二圈晚 18%，`easeOutCubic` | `fxDrawClicks` |
 | 星火 | 12 条，外 30% 长度，前 1/3 寿命白闪 | `FX_SPARK_COUNT` |

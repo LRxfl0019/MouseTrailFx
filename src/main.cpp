@@ -32,10 +32,10 @@ struct Settings {
     float clickGlow  = 45.f;   // 0..100
     bool  trailOn    = true;
     int   trailStyle = 0;      // 0=彗尾 1=星尘
-    float trailLife  = 420.f;  // 80..2000 ms
+    float trailLife  = 201.f;  // 80..2000 ms
     float trailWidth = 3.f;    // 1..12 px
     float trailGlow  = 60.f;   // 0..100
-    float opacity    = 85.f;   // 10..100
+    float opacity    = 80.f;   // 10..100
     int   blend      = 0;      // 0=screen 1=normal 2=overlay 3=multiply 4=lighten
     int   colorMode  = 0;      // 0=主题�?1=彩虹 2=自定�?
     unsigned color   = 0x4f8cff;
@@ -247,8 +247,8 @@ static void SaveConfig() {
 
 // 预设
 static void ApplyPreset(int which) {
-    g_s.clickSize = 50.f; g_s.clickGlow = 45.f; g_s.opacity = 85.f;
-    g_s.trailLife = 420.f; g_s.trailWidth = 3.f; g_s.trailGlow = 60.f;
+    g_s.clickSize = 50.f; g_s.clickGlow = 45.f; g_s.opacity = 80.f;
+    g_s.trailLife = 201.f; g_s.trailWidth = 3.f; g_s.trailGlow = 60.f;
     g_s.blend = 0; g_s.colorMode = 0; g_s.trailStyle = 0; g_s.clickStyle = 0;
     switch (which) {
         case 1:  // 霓虹
@@ -1512,7 +1512,11 @@ static HICON MakeTrayIcon(int size) {
         }
     }
 
-    HBITMAP mask = CreateBitmap(size, size, 1, 1, nullptr);
+    // 掩码必须显式清零：CreateBitmap 传 nullptr 时内容是未定义的，
+    // 若被填成全 1（透明）整枚图标就不可见 —— 托盘里“没有图标”多半是这个原因
+    int maskStride = ((size + 31) / 32) * 4;
+    std::vector<unsigned char> maskBits(size_t(maskStride) * size, 0);
+    HBITMAP mask = CreateBitmap(size, size, 1, 1, maskBits.data());
     ICONINFO ii{};
     ii.fIcon = TRUE;
     ii.hbmMask = mask;
@@ -1524,7 +1528,8 @@ static HICON MakeTrayIcon(int size) {
 }
 
 static void TrayAdd(HWND h) {
-    g_trayIcon = MakeTrayIcon(32);
+    static int tries = 0;
+    if (!g_trayIcon) g_trayIcon = MakeTrayIcon(32);
     g_nid.cbSize = sizeof(g_nid);
     g_nid.hWnd = h;
     g_nid.uID = 1;
@@ -1533,9 +1538,12 @@ static void TrayAdd(HWND h) {
     g_nid.hIcon = g_trayIcon;
     wcsncpy(g_nid.szTip, L"MouseTrailFx", 63);
     g_nid.szTip[63] = 0;
-    Shell_NotifyIconW(NIM_ADD, &g_nid);
+    BOOL ok = Shell_NotifyIconW(NIM_ADD, &g_nid);
+    if (!ok) ok = Shell_NotifyIconW(NIM_MODIFY, &g_nid);   // 已经加过时 NIM_ADD 会失败
+    LogF("tray add=%d err=%lu icon=%p try=%d", int(ok), GetLastError(), (void*)g_trayIcon, tries);
     g_nid.uVersion = NOTIFYICON_VERSION_4;
     Shell_NotifyIconW(NIM_SETVERSION, &g_nid);
+    if (!ok && ++tries < 6) SetTimer(h, 3, 1500, nullptr);  // 登录早期资源管理器可能还没准备好，重试
 }
 
 static void TrayUpdateTip(const wchar_t* tip) {
@@ -1653,7 +1661,7 @@ static LRESULT CALLBACK WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
                 PollClick();
                 return 0;
             }
-            return 0;
+            if (wp == 3) { KillTimer(h, 3); TrayAdd(h); return 0; }
         case WM_TRAY:
             if (LOWORD(lp) == WM_RBUTTONUP || LOWORD(lp) == WM_CONTEXTMENU) TrayMenu(h);
             else if (LOWORD(lp) == WM_LBUTTONDBLCLK) PanelShow();
